@@ -54,6 +54,7 @@
 SSL_CTX *httpc_sslctx = NULL;
 A_UINT8 wifi_stat_state = SX_WIFI_STATE_DISCONNECTED;
 A_UINT8 wifi_sta_device_id = 0;
+
 /**********************************************************************
 *		FUNCTION PROTOTYPES	
 ***********************************************************************/
@@ -104,6 +105,8 @@ void wifi_sta_connect_callback(A_UINT8 device_id, A_INT32 value)
 
 
 }
+
+
 
 /*************************************************************************
 *		FUNCTION DEFINITIONS
@@ -272,10 +275,10 @@ return p;
 ************************************************************************************************/
 static int client_http_action(A_UINT32 http_cmd, const char *url_ptr)
 {
-	HTTPC_RESPONSE_t *httpc_response;
+	HTTPC_RESPONSE *httpc_response;
 	A_UINT8 *httpc_respbuff;
-	HTTP_RSP_CONT_t* httpc_rspcnt;
-	HTTP_RSP_CONT_t* httpc_rsphead;
+	HTTP_RSP_CONT* httpc_rspcnt;
+	HTTP_RSP_CONT* httpc_rsphead;
 	A_UINT32 httpc_content_size;
         A_STATUS qret;
 	int num_buffers;
@@ -294,7 +297,7 @@ static int client_http_action(A_UINT32 http_cmd, const char *url_ptr)
 	}
 
 	memset( httpc_respbuff, 0, sizeof(httpc_respbuff));
-	httpc_response = (HTTPC_RESPONSE_t*) httpc_respbuff;
+	httpc_response = (HTTPC_RESPONSE*) httpc_respbuff;
 
 	qret = qcom_http_client_method(
 	       http_cmd,
@@ -348,7 +351,7 @@ static int client_http_action(A_UINT32 http_cmd, const char *url_ptr)
 	  else {
 	       httpc_rspcnt = *httpc_rsphead;
 	       while( httpc_rspcnt != NULL ) {
-	        HTTP_RSP_CONT_t *prev;
+	        HTTP_RSP_CONT *prev;
 	 	prev = httpc_rspcnt;
 		if ( httpc_rspcnt->data ) {
 		   len = httpc_rspcnt->length;
@@ -874,15 +877,21 @@ int connect_http(char* pHostname, char* pPort)
 	httpc_hostname = pHostname;
 
 	if ( pPort != NULL ) {
-	   httpc_port = pPort;
+	   httpc_port = *pPort;
 	}
 	qret = qcom_http_client_method(
-	       HTTPC_CONNECT_CMD,
-	       (A_UINT8*)httpc_hostname,
-	       (A_UINT8*)httpc_port,
-	       (A_UINT8*)NULL,
-	        NULL);
+		HTTPC_CONNECT_CMD,	   /**<< Command to be executed */
+		(A_UINT8*)httpc_hostname,  /**<< URL/IP address of the SERVER */
+		(A_UINT8*)httpc_port,	   /**<< PORT to be connected to */
+		(A_UINT8*)NULL,		   /**<< Output of the HTTP client request*/
+		NULL);			   /**<< SSL Context for Secure */
 
+	
+	if (A_ERROR == qret ) {
+	    printf("HTTP Connect Failed\n");
+	    return -1;
+	}
+		    
 	printf("HTTP connect ret=%d\n", qret);
 	return 0;
 }
@@ -926,7 +935,7 @@ int connect_https(char* pHostname, char* pPort)
 {
 
 	char *httpc_hostname = NULL;
-	char *httpc_port = "443";
+	char* httpc_port = "443";
 	A_STATUS qret;
 
 	if ( httpc_sslctx == NULL ) {
@@ -938,15 +947,21 @@ int connect_https(char* pHostname, char* pPort)
   	}
 	httpc_hostname = pHostname;
 	if ( pPort != NULL ) {
-	  httpc_port = pPort;
+	  httpc_port = *pPort;
 	}
-	qret = qcom_http_client_method(
-		HTTPC_CONNECT_SSL_CMD,
-	 	(A_UINT8*)httpc_hostname,
-		(A_UINT8*)httpc_port,
-		(A_UINT8*)NULL,
-		httpc_sslctx);
 	
+	qret = qcom_http_client_method(
+		HTTPC_CONNECT_CMD,		/**<< HTTP Command */
+		(A_UINT8*)httpc_hostname,	/**<< URL/IP of the Server */
+		(A_UINT8*)httpc_port,		/**<< PORT of the Server */
+		(A_UINT8*)NULL,			/**<< Output of the Request */
+		httpc_sslctx);			/**<< SSL context of the Request */
+		
+
+	if (A_ERROR == qret ) {
+	    printf("HTTP Connect Failed\n");
+	    return -1;
+	}
 	printf("HTTPS connect ret=%d\n", qret);
 	
 	return 0;
@@ -964,7 +979,7 @@ int connect_https(char* pHostname, char* pPort)
 * POST-CONDITION: HTTP/HTTPS connnection established is disconnected. 
 *
 * 
-* @return	 		 	0
+* @return	 		 	A_OK/A_ERROR
 *
 *\b Example:
 * @code 
@@ -985,20 +1000,20 @@ int connect_https(char* pHostname, char* pPort)
 * 
 *****************************************************************************************/
 
-int disconnect_http(void)
+A_STATUS disconnect_http(void)
 {
 	A_STATUS qret;
 
 	qret = qcom_http_client_method(
 		HTTPC_DISCONNECT_CMD,
-	 	(A_UINT8*)NULL,
+		(A_UINT8*)NULL,
 		(A_UINT8*)NULL,
 		(A_UINT8*)NULL,
 		NULL);
 
 	printf("HTTP disconnect ret=%d\n", qret);
 	
-	return 0;
+	return qret;
 }
 
 /*********************************************************************************************
@@ -1042,9 +1057,9 @@ int client_http_get(char* pMessage, const char *url_ptr)
 	}
 	qret = qcom_http_client_body(
 	  	HTTPC_BODY_CMD,
-		(A_UINT8*)url_ptr,
-		strlen(url_ptr) );
-	httpc_action(HTTPC_GET_CMD, pMessage);
+		(A_UINT8*)pMessage,
+		strlen(pMessage) );
+	httpc_action(HTTPC_GET_CMD, url_ptr);
 	return 0;
 
 }

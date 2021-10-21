@@ -48,6 +48,7 @@
 #include <ctype.h>
 #include "malloc_api.h"
 #include "qcom_ssl.h"
+#include "qcom_network.h"
 
 /*********************************************************************
 *		        Preprocessor Constants
@@ -62,12 +63,12 @@
 /*********************************************************************
 *		 	Typedefs
 **********************************************************************/
-typedef struct httpc_response{
+/*typedef struct httpc_response{
 	A_UINT32 length;
 	A_UINT32 resp_code;
 	A_UINT32 more;
 	A_UINT8 data[1];
-}HTTPC_RESPONSE_t;
+}HTTPC_RESPONSE_t;*/
 
 typedef struct http_rsp_cont {
 	struct http_rsp_cont * next;
@@ -75,7 +76,7 @@ typedef struct http_rsp_cont {
 	A_UINT32 totalLen;
 	A_UINT32 length;
 	A_UINT8 data[1];
-}HTTP_RSP_CONT_t;
+}HTTP_RSP_CONT;
 	
 /*********************************************************************
 *			Function Prototypes
@@ -89,7 +90,7 @@ void show_wifi_status(A_UINT8 device_id);
 int create_https_context_client(void);
 int connect_http(char* pHostname, char* pPort);
 int connect_https(char* pHostname, char* pPort);
-int disconnect_http(void);
+A_STATUS disconnect_http(void);
 
 int client_http_get(char* pMessage, const char *url_ptr);
 int client_http_post(char* pMessage, const char *url_ptr);
