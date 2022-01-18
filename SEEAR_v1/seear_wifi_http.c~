@@ -1003,6 +1003,16 @@ int connect_https(char* pHostname, char* pPort)
 A_STATUS disconnect_http(void)
 {
 	A_STATUS qret;
+	
+
+	qret = qcom_http_client_method(
+		HTTPC_CLEAR_HEADER_CMD,
+		(A_UINT8*)NULL,
+		(A_UINT8*)NULL,
+		(A_UINT8*)NULL,
+		NULL);
+
+	printf("Clear Header ret=%d\n",qret);
 
 	qret = qcom_http_client_method(
 		HTTPC_DISCONNECT_CMD,
@@ -1020,7 +1030,7 @@ A_STATUS disconnect_http(void)
 * Function : client_http_get();
 *\b Description:
 *
-* This function is used to disconnect HTTP/HTTPS connection   
+* This function is used to GET data from the HTTP Server   
 *
 * PRE-CONDITION: The system is initalized for all the peripherals and IOs and WIFI should be 
 *		 be connected also HTTP/HTTPS should be connected
@@ -1063,4 +1073,54 @@ int client_http_get(char* pMessage, const char *url_ptr)
 	return 0;
 
 }
-int client_http_post(char* pMessage, const char *url_ptr);
+
+/*********************************************************************************************
+* Function : client_http_post();
+*\b Description:
+*
+* This function is used to POST to HTTP/HTTPS Server   
+*
+* PRE-CONDITION: The system is initalized for all the peripherals and IOs and WIFI should be 
+*		 be connected also HTTP/HTTPS should be connected
+*
+* POST-CONDITION: HTTP/HTTPS POST Method is executed 
+* @param[in, out]	pMessage 	The Message to be GET is returned 
+* @param[in]		url_ptr		pointer to the URL to execute GET method
+* 
+* @return	 		 	0
+*
+*\b Example:
+* @code 
+*
+*
+* @endcode
+*
+* @see seear_wifi_http.h
+*
+*
+*<br><b>- HISTORY OF CHANGES -</b>
+*
+* <table align="left" style="width:800px">
+* <tr><td> Date </td><td> Software Version</td><td> Initials</td><td>Description</td><tr>
+* <tr><td> 09/10/2021 </td> 0.5.0	  </td><td> SP	    </td><td>Interface Created</td></tr>
+* </table><br><br>
+* <hr>
+* 
+*****************************************************************************************/
+int client_http_post(char* pMessage, const char *url_ptr)
+{
+
+	A_STATUS qret;
+	
+	if ( NULL == url_ptr ){
+	   return -1;
+	}
+
+	qret = qcom_http_client_body(
+	    	HTTPC_BODY_CMD,
+		(A_UINT8*)pMessage,
+		strlen(pMessage) );
+
+	httpc_action(HTTPC_POST_CMD, url_ptr);
+	return 0;
+}

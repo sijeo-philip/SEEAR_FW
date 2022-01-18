@@ -1,13 +1,13 @@
 /*****************************************************************
-* Title			:	seear_wifi_http
-* Filename		:	seear_wifi_http.h
+* Title			:	seear_sys_init
+* Filename		:	seear_sys_init.h
 * Author		:	Sijeo Philip
-* Origin Date		:	1st Oct 2021
+* Origin Date		:	26th Oct 2021
 * Version		:	1.0.0
 * Compiler		:	gcc
 * Target		: 	QCA4010 (SX-ULGPN, Silex)
-* Notes			:	This Module is used to do the HTTP/
-*				HTTPS Transactions
+* Notes			:	This Module is used to Initialize the
+*				System
 * THIS SOFTWARE IS PROVIDED BY UNISEM ELECTRONICS "AS IS" AND 
 * ANY EXPRESSED OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
 * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
@@ -25,22 +25,22 @@
 /*******************INTERFACE CHANGE LIST****************************
 *
 *   DATE	VERSION		AUTHOR		DESCRIPTION
-*  01/10/2021   1.0.0	     Sijeo Philip	Interface Created
+*  26/10/2021   1.0.0	     Sijeo Philip	Interface Created
 *********************************************************************/
 
 /********************************************************************
-* @file seear_http.h
-* @brief This module is used as interface to do http/https transaction
-*	 of data over wifi connection 
+* @file seear_sys_init.h
+* @brief This module is used to initialize the system 
+*	 
 *********************************************************************/
 
-#ifndef _SEEAR_WIFI_HTTP_H_
-#define _SEEAR_WIFI_HTTP_H_
+#ifndef _SEEAR_SYS_INIT_H_
+#define _SEEAR_SYS_INIT_H_
 
+#ifdef __cplusplus
+{
+#endif
 
-#ifdef __cpluscplus
-extern "C" {
-#endif 
 /*********************************************************************
 *			Includes
 **********************************************************************/
@@ -53,56 +53,34 @@ extern "C" {
 #include "malloc_api.h"
 #include "qcom_ssl.h"
 #include "qcom_network.h"
+#include "select_api.h"
+#include "qcom_i2s.h"
+#include "qcom_i2c_master.h"
+#include "qcom_gpio.h"
 
 /*********************************************************************
 *		        Preprocessor Constants
 ***********************************************************************/
-#define SX_WIFI_STATE_DISCONNECTED	0
-#define SX_WIFI_STATE_CONNECTING	1
-#define SX_WIFI_STATE_CONNECTED		2
-#define SX_WIFI_STATE_CONNECT_FAILED	3
-#define SX_WIFI_STATE_RECONNECTING	4
-#define SX_WIFI_STATE_DISCONNECTING	5
 
 /*********************************************************************
 *		 	Typedefs
 **********************************************************************/
-/*typedef struct httpc_response{
-	A_UINT32 length;
-	A_UINT32 resp_code;
-	A_UINT32 more;
-	A_UINT8 data[1];
-}HTTPC_RESPONSE_t;*/
 
-typedef struct http_rsp_cont {
-	struct http_rsp_cont * next;
-	A_UINT32 flag;
-	A_UINT32 totalLen;
-	A_UINT32 length;
-	A_UINT8 data[1];
-}HTTP_RSP_CONT;
 	
 /*********************************************************************
 *			Function Prototypes
 **********************************************************************/
 
-int connect_device(char* passphrase, char* ssid, A_UINT8 wpa_wpa2, A_UINT8 aes_tkip);
-int disconnect_device(void);
-int ipconfig_device(int mode, char *pAddress, char *pNetmask, char *pGateway);
-int ping_connection(char* address, int ping_size);
-void show_wifi_status(A_UINT8 device_id);
-int create_https_context_client(void);
-int connect_http(char* pHostname, char* pPort);
-int connect_https(char* pHostname, char* pPort);
-A_STATUS disconnect_http(void);
-
-int client_http_get(char* pMessage, const char *url_ptr);
-int client_http_post(char* pMessage, const char *url_ptr);
+A_INT32 pcdm3180_init( void ); 
+void display_init( void );
+void button_init( void );
 
 
 #ifdef __cplusplus
 }
+
 #endif
+
 
 #endif
 

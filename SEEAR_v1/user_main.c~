@@ -32,19 +32,15 @@
 #endif
 
 #define AUDIO_BUFF_SIZE	1024*10
-#define I2S_QUEUE_SIZE	4
 
 TX_THREAD writer_thread;
 TX_THREAD reader_thread;
-TX_QUEUE i2s_queue;
 
 A_UINT8 write_audio_stack[USER_APP_STACK_SIZE];
 A_UINT8 read_audio_stack[USER_APP_STACK_SIZE];
 
 A_INT16 m_currentAudioBuffer[AUDIO_BUFF_SIZE];
 A_INT16 m_capturedAudioBuffer[AUDIO_BUFF_SIZE];
-
-A_UINT32 I2S_Audio_Queue[I2S_QUEUE_SIZE];
 
 
 /*********************************************************************************************
@@ -166,18 +162,8 @@ void user_main(void)
 
 	tx_thread_create(&reader_thread, "audio_reader_thread", audio_reader_thread, 0, read_audio_stack,
 USER_APP_STACK_SIZE, USER_APP_PRIORITY, USER_APP_PRIORITY, USER_APP_SLICE_RD, TX_AUTO_START);
-/****
-*Message Queue Creation Parameters
-*UINT tx_queue_create(TX_QUEUE *queue_ptr, CHAR *name_ptr, UINT message_size,
-*		      VOID *queue_start, ULONG queue_size);
-*<*queue_ptr> -- Address of the Descriptor of the Queue Created
-*<*name_ptr> -- String representing the name of the Queue, 
-*<message_size> -- Size of each message on queue, <*queue_start> -- Address of the Queue Memory
-*<queue_size> -- Size of the Queue in bytes i.e. it should match the number of 
-* ULONG messages it can hold
-*/
 
-	tx_queue_create(&i2s_queue, "audio_queue", TX_1_ULONG, I2S_Audio_Queue, 16);
+
      //TO DO: Initialize Message queue.
 	
       	cdr_threadx_thread_init();

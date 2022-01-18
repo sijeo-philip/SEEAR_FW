@@ -1003,6 +1003,16 @@ int connect_https(char* pHostname, char* pPort)
 A_STATUS disconnect_http(void)
 {
 	A_STATUS qret;
+	
+
+	qret = qcom_http_client_method(
+		HTTPC_CLEAR_HEADER_CMD,
+		(A_UINT8*)NULL,
+		(A_UINT8*)NULL,
+		(A_UINT8*)NULL,
+		NULL);
+
+	printf("Clear Header ret=%d\n",qret);
 
 	qret = qcom_http_client_method(
 		HTTPC_DISCONNECT_CMD,
@@ -1105,6 +1115,8 @@ int client_http_post(char* pMessage, const char *url_ptr)
 	if ( NULL == url_ptr ){
 	   return -1;
 	}
+	//TODO: Set HEADER for the HTTP Transaction 
+
 
 	qret = qcom_http_client_body(
 	    	HTTPC_BODY_CMD,

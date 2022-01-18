@@ -76,7 +76,7 @@ typedef struct http_rsp_cont {
 	A_UINT32 totalLen;
 	A_UINT32 length;
 	A_UINT8 data[1];
-}HTTP_RSP_CONT_t;
+}HTTP_RSP_CONT;
 	
 /*********************************************************************
 *			Function Prototypes
