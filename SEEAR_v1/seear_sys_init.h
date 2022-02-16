@@ -61,10 +61,43 @@
 /*********************************************************************
 *		        Preprocessor Constants
 ***********************************************************************/
+#define I2S_BUFF_SIZE 		1024
+#define I2S_BUFF_MAX_SIZE	1440
+#define I2S_BUFF_CNT		10
+#define AUDIO_BUFF_SIZE		1024*10
+#define AUDIO_CAPTURE_INTERVAL	2000
+
+
+
+#define I2S1			1
+#define I2S0			0
+
+/**
+* This MACRO is used to use the qcom application timer or ThreadX timer
+* 1 ==> To use the qcom_timer API for Millisecond Delay
+* 2 ==> To use the ThreadX ticks timer.
+*
+***/
+#ifndef AUDIO_CAPTURE_TIMER
+#define AUDIO_CAPTURE_TIMER	1
+#endif
+
 
 /*********************************************************************
 *		 	Typedefs
 **********************************************************************/
+typedef struct audio_buff_ctrl
+{
+	A_UINT8 currBuffFlag;  /** << stores the state of the current buffer
+				      0 for Buffer1 as current Buffer 1 as
+				      for Buffer2 as current Buffer */ 
+	A_UINT8 *p_currentBuffer;
+	A_UINT8 *p_captureBuffer;
+	A_UINT32 audioDataCount;   /**<< Number of 1K bytes of Data Recvd*/
+	A_UINT32 audioTransmitCount; /**<< Number of 10K transmit over Wifi*/
+}audio_buff_ctrl_t;
+
+
 
 	
 /*********************************************************************
@@ -74,6 +107,8 @@
 A_INT32 pcdm3180_init( void ); 
 void display_init( void );
 void button_init( void );
+void audio_buffer_init(audio_buff_ctrl_t *audio_buff_ctrl);
+void swap_audio_buff(audio_buff_ctrl_t *audio_buff_ctrl);
 
 
 #ifdef __cplusplus

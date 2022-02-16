@@ -43,9 +43,6 @@
 /**********************************************************************
 *		MODULE PREPROCESSOR MACROS
 ***********************************************************************/
-#define I2S_BUFF_SIZE 		1024
-#define I2S_BUFF_MAX_SIZE	1440
-#define I2S_BUFFER_CNT		8
 
 #define I2S1_SCK		27
 #define I2S1_SDI		30
@@ -53,8 +50,7 @@
 #define I2S1_WS			32
 #define I2S1_MCLK		33
 
-#define I2S1			1
-#define I2S0			0
+
 /**********************************************************************
 *		MODULE TYPEDEFS	
 ***********************************************************************/
@@ -65,12 +61,17 @@
 static i2s_api_config_s i2sConfig {
 			.port = I2S1, /**<< PORT 1 of I2S*/
 			.freq = I2S_FREQ_44_1K, /**<< I2S Frequency of Sampling */
-			.dsize = 16, /**<< 16 bit Data Size of each sample */
+			.dsize = 24, /**<< 24 bit Data Size of each sample */
 			.i2s_buf_size = I2S_BUFF_SIZE, /**<< I2S data buffer size */
 			.num_rx_desc = I2S_BUFF_CNT, /**<< Number of recieve Buffer */
 			.num_tx_desc = 0, /**<< Number for Transmit Buffer */
 			.i2s_mode =1,     /**<< Master Mode for the i2s peripheral */
 };
+
+
+extern TX_QUEUE i2s_queue;
+static A_UINT8 m_AudioBuffer1[AUDIO_BUFF_SIZE];
+static A_UINT8 m_AudioBuffer2[AUDIO_BUFF_SIZE];
 /**********************************************************************
 *		FUNCTION PROTOTYPES	
 ***********************************************************************/
@@ -79,10 +80,20 @@ static i2s_api_config_s i2sConfig {
 /*************************************************************************
 *		CALLBACKS
 **************************************************************************/
-static void i2s_rxcomp_intr_callback( unsigned char* data , unsigned int size)
+static void i2s_rxcomp_intr_callback( void *params)
 {
+	UINT status;
+	static A_UINT8 bufferCount = 0;
+	status = tx_queue_send(&i2s_queue, &bufferCount, TX_NO_WAIT);  /**<<On reciept of 1K of Data*/
+	if( TX_SUCCESS == status )
+	{
 
-
+	   bufferCount = bufferCount + 1;
+	   if (bufferCount >= I2S_BUFF_CNT )
+	   {
+		bufferCount = 0
+	   }
+        }
 
 }
 
@@ -140,4 +151,91 @@ A_INT32 pcdm3180_init( void )
 	qcom_i2s_rcv_control(I2S1, I2S_RCV_START);
 	return ret;
 	
+}
+
+/*********************************************************************************************
+* Function : audio_buffer_init( audio_buff_ctrl_t * )
+*\b Description:
+*
+* This function is used to initialize the audio buffers before collecting the Audio samples 
+* from the I2S Interface 
+*
+*  PRE-CONDITION: The system is initalized for all the peripheral
+*  POST-CONDITION: The Memory and the buffer is intialized to receive I2S data
+* @param[in, out]	ptr to audio_buff_ctrl_t structure
+*
+* @return	  	None
+*
+*\b Example:
+* @code 
+*
+*
+* @endcode
+*
+* @see seear_sys_init.h
+*
+*
+*<br><b>- HISTORY OF CHANGES -</b>
+*
+* <table align="left" style="width:800px">
+* <tr><td> Date </td><td>Software Version</td><td>Initials<td><td>Description</td><tr>
+* <tr><td> 02/07/2021</td>0.5</td><td>SP</td><td>Interface Created</td></tr>
+* </table><br><br>
+* <hr>
+*
+************************************************************************************************/
+void audio_buffer_init(audio_buff_ctrl_t *audio_buff_ctrl)
+{
+	audio_buff_ctrl->currBuffFlag = 0; 
+	audio_buff_ctrl->p_currentBuffer = m_AudioBuffer1;
+	audio_buff_ctrl->p_captureBuffer = m_AudioBuffer2;
+	audio_buff_ctrl->audioDataCount = 0;
+	audio_buff_ctrl->audioTransmitCount = 0;
+}
+
+/*********************************************************************************************
+* Function : swap_audio_buff( audio_buff_ctrl_t * )
+*\b Description:
+*
+* This function is used to swap the captureBuffer and currentBuffer i.e. between 
+* m_AudioBuffer1 and m_AudioBuffer2
+*
+*  PRE-CONDITION: The system is initalized for all the peripheral
+*  POST-CONDITION: The Capture buffer and Current Buffer is swapped
+* @param[in, out]	ptr to audio_buff_ctrl_t structure
+*
+* @return	  	None
+*
+*\b Example:
+* @code 
+*
+*
+* @endcode
+*
+* @see seear_sys_init.h
+*
+*
+*<br><b>- HISTORY OF CHANGES -</b>
+*
+* <table align="left" style="width:800px">
+* <tr><td> Date </td><td>Software Version</td><td>Initials<td><td>Description</td><tr>
+* <tr><td> 02/07/2021</td>0.5</td><td>SP</td><td>Interface Created</td></tr>
+* </table><br><br>
+* <hr>
+*
+************************************************************************************************/
+void swap_audio_buff(audio_buff_ctrl_t *audio_buff_ctrl)
+{
+	if(0 == audio_buff_ctrl->currBuffFlag)
+	{
+	  audio_buff_ctrl->currBuffFlag = 1;
+	  audio_buff_ctrl->p_currentBuffer = m_AudioBuffer2;
+	  audio_buff_ctrl->p_captureBuffer = m_AudioBuffer1;
+	}
+	else
+	{
+	  audio_buff_ctrl->currBuffFlag = 0;
+	  audio_buff_ctrl->p_currentBuffer = m_AudioBuffer1;
+	  audio_buff_ctrl->p_captureBuffer = m_AudioBuffer2;
+	}
 }

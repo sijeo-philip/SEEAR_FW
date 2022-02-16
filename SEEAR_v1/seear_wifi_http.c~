@@ -1115,6 +1115,8 @@ int client_http_post(char* pMessage, const char *url_ptr)
 	if ( NULL == url_ptr ){
 	   return -1;
 	}
+	//TODO: Set HEADER for the HTTP Transaction 
+
 
 	qret = qcom_http_client_body(
 	    	HTTPC_BODY_CMD,
