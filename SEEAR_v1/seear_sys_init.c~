@@ -189,6 +189,8 @@ void audio_buffer_init(audio_buff_ctrl_t *audio_buff_ctrl)
 	audio_buff_ctrl->currBuffFlag = 0; 
 	audio_buff_ctrl->p_currentBuffer = m_AudioBuffer1;
 	audio_buff_ctrl->p_captureBuffer = m_AudioBuffer2;
+	audio_buff_ctrl->audioDataCount = 0;
+	audio_buff_ctrl->audioTransmitCount = 0;
 }
 
 /*********************************************************************************************

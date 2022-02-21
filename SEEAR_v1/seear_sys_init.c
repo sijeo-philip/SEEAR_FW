@@ -58,7 +58,7 @@
 /**********************************************************************
 *		MODULE VARIABLE DEFINITIONS
 ***********************************************************************/
-static i2s_api_config_s i2sConfig {
+static i2s_api_config_s i2sConfig={
 			.port = I2S1, /**<< PORT 1 of I2S*/
 			.freq = I2S_FREQ_44_1K, /**<< I2S Frequency of Sampling */
 			.dsize = 24, /**<< 24 bit Data Size of each sample */
@@ -91,7 +91,7 @@ static void i2s_rxcomp_intr_callback( void *params)
 	   bufferCount = bufferCount + 1;
 	   if (bufferCount >= I2S_BUFF_CNT )
 	   {
-		bufferCount = 0
+		bufferCount = 0;
 	   }
         }
 

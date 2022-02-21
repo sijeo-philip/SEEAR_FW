@@ -38,9 +38,7 @@
 #define _SEEAR_WIFI_HTTP_H_
 
 
-#ifdef __cpluscplus
-extern "C" {
-#endif 
+
 /*********************************************************************
 *			Includes
 **********************************************************************/
@@ -100,9 +98,6 @@ int client_http_get(char* pMessage, const char *url_ptr);
 int client_http_post(char* pMessage, const char *url_ptr);
 
 
-#ifdef __cplusplus
-}
-#endif
 
 #endif
 

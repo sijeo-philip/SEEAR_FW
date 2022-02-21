@@ -52,8 +52,9 @@
 *		MODULE VARIABLE DEFINITIONS
 ***********************************************************************/
 SSL_CTX *httpc_sslctx = NULL;
-A_UINT8 wifi_stat_state = SX_WIFI_STATE_DISCONNECTED;
+A_UINT8 wifi_sta_state = SX_WIFI_STATE_DISCONNECTED;
 A_UINT8 wifi_sta_device_id = 0;
+A_UINT8 wifi_sta_auth_mode;
 
 /**********************************************************************
 *		FUNCTION PROTOTYPES	
@@ -73,11 +74,11 @@ void wifi_sta_connect_callback(A_UINT8 device_id, A_INT32 value)
 	   return;
 	}
 
-	printf("STA Callback stat =%d, event=%d\n", wif_sta_state, value);
+	printf("STA Callback stat =%d, event=%d\n", wifi_sta_state, value);
 	switch (wifi_sta_state) {
 	case SX_WIFI_STATE_CONNECTING:
 	   if ( cbValue == QCOM_NOT_CONNECTED || cbValue == QCOM_RSNA_AUTH_FAIL) {
-		wifi_sta_state = SX_WIFI_CONNECT_FAILED;	
+		wifi_sta_state = SX_WIFI_STATE_CONNECT_FAILED;	
 		break;
 	    }
 	case SX_WIFI_STATE_RECONNECTING:
@@ -278,7 +279,7 @@ static int client_http_action(A_UINT32 http_cmd, const char *url_ptr)
 	HTTPC_RESPONSE *httpc_response;
 	A_UINT8 *httpc_respbuff;
 	HTTP_RSP_CONT* httpc_rspcnt;
-	HTTP_RSP_CONT* httpc_rsphead;
+	HTTP_RSP_CONT** httpc_rsphead;
 	A_UINT32 httpc_content_size;
         A_STATUS qret;
 	int num_buffers;
@@ -292,7 +293,7 @@ static int client_http_action(A_UINT32 http_cmd, const char *url_ptr)
 	
 	httpc_tmpbuff = qcom_mem_alloc(1500);
 	if ( NULL == httpc_tmpbuff ){
-           qcom_mem_free(respbuff);
+           qcom_mem_free(httpc_respbuff);
 	   return -1;
 	}
 
@@ -307,7 +308,7 @@ static int client_http_action(A_UINT32 http_cmd, const char *url_ptr)
 		httpc_sslctx);
 	printf("HTTP action cmd = %d ret=%d\n", http_cmd, qret);
 	if ( qret != A_OK ){
-	    qcom_mem_free(httc_respbuff);
+	    qcom_mem_free(httpc_respbuff);
 	    qcom_mem_free(httpc_tmpbuff);
 	    return 0;
          }
@@ -420,9 +421,7 @@ int ipconfig_device(int mode, char *pAddress, char *pNetmask, char *pGateway)
 	struct sockaddr_storage	ss;
 	char buff[20];
 	int len;
-	int mode;
-
-
+	
 	/*Query for the IP Data */
 	qcom_ipconfig( wifi_sta_device_id, 0, &address, &netmask, &gateway);
 	if ((mode != 1) || (mode !=2) )
@@ -447,7 +446,7 @@ int ipconfig_device(int mode, char *pAddress, char *pNetmask, char *pGateway)
 	  len = sizeof(ss);
 	  gf_StringToSockaddr(pAddress, &ss, &len);
 	  address = ntohl(((struct sockaddr_in*)&ss)->sin_addr.s_addr);
-	  printf("Assigned fixed address\n);
+	  printf("Assigned fixed address\n");
 	}
 
 	if (pNetmask != NULL)
@@ -461,7 +460,7 @@ int ipconfig_device(int mode, char *pAddress, char *pNetmask, char *pGateway)
 	{
 	  len = sizeof(ss);
 	  gf_StringToSockaddr(pGateway, &ss, &len);
-	  gateway = ntohl(((struct sockaddr_in*)
+	  gateway = ntohl(((struct sockaddr_in*)&ss)->sin_addr.s_addr);
 	}
 	
 	qcom_ipconfig(wifi_sta_device_id, mode, &address, &netmask, &gateway);
@@ -585,10 +584,10 @@ int connect_device(char* passphrase, char* ssid, A_UINT8 wpa_wpa2, A_UINT8 aes_t
 	qret = qcom_set_ssid(wifi_sta_device_id, ssid);
 	printf("set ssid =%s qret=%d\n", ssid, qret);
 
-	qret = qcom_set_connect_callback(device_id, wifi_sta_connect_callback);
+	qret = qcom_set_connect_callback(wifi_sta_device_id, wifi_sta_connect_callback);
 	printf("set callback ret=%d\n", qret);
 
-	qret = qcom_commit(device_id);
+	qret = qcom_commit(wifi_sta_device_id);
 	printf("commit ret=%d\n", qret);
 
 	printf("Waiting for STA Connect...");
@@ -877,7 +876,7 @@ int connect_http(char* pHostname, char* pPort)
 	httpc_hostname = pHostname;
 
 	if ( pPort != NULL ) {
-	   httpc_port = *pPort;
+	   httpc_port = pPort;
 	}
 	qret = qcom_http_client_method(
 		HTTPC_CONNECT_CMD,	   /**<< Command to be executed */
@@ -942,7 +941,7 @@ int connect_https(char* pHostname, char* pPort)
 	   printf("SSL context is not ready\n");
 	   return -1;
 	}
-	if ( *pHostname == NULL ) {
+	if ( pHostname == NULL ) {
 	   return -1;
   	}
 	httpc_hostname = pHostname;
@@ -1069,7 +1068,7 @@ int client_http_get(char* pMessage, const char *url_ptr)
 	  	HTTPC_BODY_CMD,
 		(A_UINT8*)pMessage,
 		strlen(pMessage) );
-	httpc_action(HTTPC_GET_CMD, url_ptr);
+	client_http_action(HTTPC_GET_CMD, url_ptr);
 	return 0;
 
 }
@@ -1115,14 +1114,15 @@ int client_http_post(char* pMessage, const char *url_ptr)
 	if ( NULL == url_ptr ){
 	   return -1;
 	}
-	//TODO: Set HEADER for the HTTP Transaction 
-
-
+	
 	qret = qcom_http_client_body(
 	    	HTTPC_BODY_CMD,
 		(A_UINT8*)pMessage,
 		strlen(pMessage) );
 
-	httpc_action(HTTPC_POST_CMD, url_ptr);
+	client_http_action(HTTPC_POST_CMD, url_ptr);
 	return 0;
 }
+
+
+

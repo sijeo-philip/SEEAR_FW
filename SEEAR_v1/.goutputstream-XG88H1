@@ -117,13 +117,12 @@ void audio_capture_timer_callback( unsigned int params, void* data )
 * <hr>
 *
 ************************************************************************************************/
-#if 0
+
 static A_BOOL process_audio_samples(void* data, A_UINT16 threshold)
 {
 	//TO DO: Check if the Data is passed the Threshold for Recording
 
 }
-#endif 
 /*********************************************************************************************
 * Function : user_app_entry()
 *\b Description:
